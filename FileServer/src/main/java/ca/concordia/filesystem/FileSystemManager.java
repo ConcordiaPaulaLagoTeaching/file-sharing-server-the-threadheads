@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class FileSystemManager {
-
+    
     private final int MAXFILES = 5; //Number of FEntry slots
     private final int MAXBLOCKS = 10; //number of blocks
     private final static FileSystemManager instance;
