@@ -1,0 +1,10 @@
+FileServer/src/test/java/ServerTests.java
+FileServer/src/test/java/ThreadManagementTests.java
+FileServer/src/test/java/helpers/ServerRunner.java
+FileServer/src/test/java/helpers/ClientRunner.java
+FileServer/src/test/java/FileSystemTests.java
+FileServer/src/main/java/ca/concordia/server/FileServer.java
+FileServer/src/main/java/ca/concordia/filesystem/datastructures/FEntry.java
+FileServer/src/main/java/ca/concordia/filesystem/datastructures/FNode.java
+FileServer/src/main/java/ca/concordia/filesystem/FileSystemManager.java
+FileServer/src/main/java/ca/concordia/Main.java

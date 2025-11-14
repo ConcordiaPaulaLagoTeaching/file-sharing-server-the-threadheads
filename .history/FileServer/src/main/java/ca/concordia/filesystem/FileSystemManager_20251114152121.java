@@ -14,10 +14,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class FileSystemManager {
-    
+
     private final int MAXFILES = 5; //Number of FEntry slots
     private final int MAXBLOCKS = 10; //number of blocks
-    //private final static FileSystemManager instance;
+    private final static FileSystemManager instance;
     private final RandomAccessFile disk;
     private final ReentrantLock globalLock = new ReentrantLock();
 
@@ -49,14 +49,14 @@ public class FileSystemManager {
 
         if(currentsize == 0) {
             disk.setLength(expectedsize);
-            ini_empty_filesystem_OD();
+            initializeemptyfilesystemondisk();
         }
         else if (currentsize < expectedsize){
             disk.setLength(expectedsize);
-            load_metadata_FD();
+            loadmetadatafromdisk();
         }
         else{
-            load_metadata_FD();
+            loadmetadatafromdisk();
         }
     }
 
@@ -76,7 +76,7 @@ public class FileSystemManager {
             
             FEntry entry = new FEntry(filename, (short) 0, (short) -1);
             inodeTable[freeindex] = entry;
-            write_FEntry_OD(freeindex, entry);
+            writeFEntrytodisk(freeindex, entry);
         }
 
         finally {
@@ -101,12 +101,12 @@ public class FileSystemManager {
                 fnodeNext[current] = -1;
                 freeblocklist[current] = (current >= metadatablocks);
 
-                write_FNode_OD(current);
-                if (current >= metadatablocks) empty_data_block(current);
+                writeFNodetodisk(current);
+                if (current >= metadatablocks) zerodatablock(current);
                 current = next;
             }
             inodeTable[index] = null;
-            write_empty_FEntry_OD(index);
+            writeemptyFEntrytodisk(index);
         }
         finally {
             rwLock.writeLock().unlock();
@@ -114,7 +114,7 @@ public class FileSystemManager {
     }
 
 
-    public void writefile(String filename, byte[] contents) throws Exception {
+    public void writeFile(String filename, byte[] contents) throws Exception {
         rwLock.writeLock().lock();
         try{
             int index = find_file_index(filename);
@@ -159,7 +159,7 @@ public class FileSystemManager {
                 int index_next = (i==newchain.size() -1) ? -1 : newchain.get(i+1);
                 fnodeNext[index_node] = (short) index_next;
                 freeblocklist[index_node] = false;
-                write_FNode_OD(index_node);
+                writeFNodetodisk(index_node);
             }
 
             for (int i = recycleblocks; i < oldblocks; i++){
@@ -167,22 +167,22 @@ public class FileSystemManager {
                 fnodeBlockIndex[index_node] = (short) -index_node;
                 fnodeNext[index_node] = -1;
                 freeblocklist[index_node] = (index_node >= metadatablocks);
-                write_FNode_OD(index_node);
-                if (index_node >= metadatablocks) empty_data_block(index_node);
+                writeFNodetodisk(index_node);
+                if (index_node >= metadatablocks) zerodatablock(index_node);
             }
 
             int offset =0;
             for (int i=0; i<newchain.size(); i++){
                 int index_node = newchain.get(i);
                 int index_write = Math.min(BLOCK_SIZE, filesize - offset);
-                write_data_block(index_node, contents, offset, index_write);
+                writedatablock(index_node, contents, offset, index_write);
                 offset += index_write;
             }
 
             short firstblock = newchain.isEmpty() ? (short) -1 : newchain.get(0).shortValue();
             entry.setFilesize((short) filesize);
             inodeTable[index] = new FEntry(entry.getFilename(), (short) filesize, firstblock);
-            write_FEntry_OD(index, inodeTable[index]);
+            writeFEntrytodisk(index, inodeTable[index]);
         }
 
         finally{
@@ -210,7 +210,7 @@ public class FileSystemManager {
             for (int index_node : chain){
                 int toread = Math.min(BLOCK_SIZE,  filesize - offset);
                 if (toread <=0) break;
-                read_data_block(index_node, result, offset, toread);
+                readdatablock(index_node, result, offset, toread);
                 offset += toread;
             }
 
@@ -222,7 +222,7 @@ public class FileSystemManager {
         }
     }
 
-    public String[] listfiles(){
+    public String[] listFiles(){
         rwLock.readLock().lock();
         try{
             List<String> filenames = new ArrayList<>();
@@ -240,10 +240,10 @@ public class FileSystemManager {
     }
 
 
-    private void ini_empty_filesystem_OD() throws IOException { //OD => on disk
+    private void initializeemptyfilesystemondisk() throws IOException {
         for (int i=0; i<MAXFILES; i++){
             inodeTable[i] = null;
-            write_empty_FEntry_OD(i);
+            writeemptyFEntrytodisk(i);
         }
 
         for (int i=0; i < MAXBLOCKS; i++){
@@ -258,14 +258,14 @@ public class FileSystemManager {
                 fnodeNext[i] = -1;
                 freeblocklist[i] = true;
             }
-            write_FNode_OD(i);
+            writeFNodetodisk(i);
         }
     }
 
 
-    private void load_metadata_FD() throws IOException { //FD => from disk
+    private void loadmetadatafromdisk() throws IOException {
         for (int i=0; i<MAXFILES; i++){
-            inodeTable[i] = read_FEntry_FD(i);
+            inodeTable[i] = readFEntryfromdisk(i);
         }
 
         for (int i=0; i<MAXBLOCKS; i++) {
@@ -282,7 +282,7 @@ public class FileSystemManager {
     }
 
 
-    private void write_FEntry_OD(int index, FEntry entry) throws IOException {
+    private void writeFEntrytodisk(int index, FEntry entry) throws IOException {
         long pos = entryoffset + (long) index * FEntry_size;
         disk.seek(pos);
         byte[] name_byte = new byte[11];
@@ -301,7 +301,7 @@ public class FileSystemManager {
 
 
 
-    private void write_empty_FEntry_OD(int index) throws IOException {
+    private void writeemptyFEntrytodisk(int index) throws IOException {
         long pos = entryoffset + (long) index * FEntry_size;
         disk.seek(pos);
         disk.write (new byte[11]); //for name
@@ -311,7 +311,7 @@ public class FileSystemManager {
     }
 
 
-    private FEntry read_FEntry_FD(int index) throws IOException {
+    private FEntry readFEntryfromdisk(int index) throws IOException {
         long pos = entryoffset + (long) index * FEntry_size;
         disk.seek(pos);
         byte[] name_byte = new byte[11];
@@ -331,7 +331,7 @@ public class FileSystemManager {
     }
 
 
-    private void write_FNode_OD(int index) throws IOException {
+    private void writeFNodetodisk(int index) throws IOException {
         long pos = nodeoffset + (long) index * FNode_size;
         disk.seek(pos);
         disk.writeShort(fnodeBlockIndex[index]);
@@ -339,7 +339,7 @@ public class FileSystemManager {
     }
 
 
-    private void write_data_block (int index_block, byte[] src, int offset, int length) throws IOException {
+    private void writedatablock (int index_block, byte[] src, int offset, int length) throws IOException {
         long pos = (long) index_block * BLOCK_SIZE;
         disk.seek(pos);
         disk.write(src, offset, length);
@@ -349,14 +349,14 @@ public class FileSystemManager {
     }
 
 
-    private void read_data_block (int index_block, byte[] dst, int offset, int length) throws IOException {
+    private void readdatablock (int index_block, byte[] dst, int offset, int length) throws IOException {
         long pos = (long) index_block * BLOCK_SIZE;
         disk.seek(pos);
         disk.write(new byte[BLOCK_SIZE]);
     }
 
 
-    private void empty_data_block (int index_block) throws IOException { //erases the contents of the data block and changes it to zeroes
+    private void zerodatablock (int index_block) throws IOException {
         long pos = (long) index_block * BLOCK_SIZE;
         disk.seek(pos);
         disk.write(new byte[BLOCK_SIZE]);
@@ -414,7 +414,7 @@ public class FileSystemManager {
 
 
 
-
+    
 
 }
 

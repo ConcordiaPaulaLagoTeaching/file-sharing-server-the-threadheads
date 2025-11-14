@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class FileSystemManager {
-    
+
     private final int MAXFILES = 5; //Number of FEntry slots
     private final int MAXBLOCKS = 10; //number of blocks
     //private final static FileSystemManager instance;
@@ -114,7 +114,7 @@ public class FileSystemManager {
     }
 
 
-    public void writefile(String filename, byte[] contents) throws Exception {
+    public void writeFile(String filename, byte[] contents) throws Exception {
         rwLock.writeLock().lock();
         try{
             int index = find_file_index(filename);
@@ -222,7 +222,7 @@ public class FileSystemManager {
         }
     }
 
-    public String[] listfiles(){
+    public String[] listFiles(){
         rwLock.readLock().lock();
         try{
             List<String> filenames = new ArrayList<>();
