@@ -198,22 +198,9 @@ public class FileSystemManager {
             if (index == -1){
                 throw new Exception("file does not exist");
             }
+            
 
-            FEntry entry = inodeTable[index];
-            int filesize = entry.getFilesize();
-            if (filesize<=0) return new byte[0];
-            List<Integer> chain = getBlockChain(entry);
-            byte[] result = new byte[size];
-            int offset =0;
 
-            for (int index_node : chain){
-                int toread = Math.min(BLOCK_SIZE,  filesize - offset);
-                if (toread <=0) break;
-                readDataBlock(index_node, result, offset, toread);
-                offset += toread;
-            }
-
-            return result;
         }
     }
 
