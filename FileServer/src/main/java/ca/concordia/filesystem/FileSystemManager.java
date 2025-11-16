@@ -37,6 +37,8 @@ public class FileSystemManager {
     private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true);
 
     public FileSystemManager(String filename, int totalSize) throws IOException {
+        
+
         // Initialize the file system manager with a file
         this.entryoffset = 0;
         this.nodeoffset = MAXFILES * FEntry_size;
@@ -59,11 +61,21 @@ public class FileSystemManager {
             load_metadata_FD();
         }
     }
-
-
-    public void createfile(String filename) throws Exception {
+    public void lockRead() {
+        rwLock.readLock().lock();
+    }
+    public void unlockRead() {
+        rwLock.readLock().unlock();
+    }
+    public void lockWrite() {
         rwLock.writeLock().lock();
-        try {
+    }
+    public void unlockWrite() {
+        rwLock.writeLock().unlock();
+    }
+
+    public void createFile(String filename) throws Exception {
+        
             check_filename(filename);
             if (find_file_index(filename) != -1) {
                 throw new Exception("File Already exists");
@@ -77,16 +89,12 @@ public class FileSystemManager {
             FEntry entry = new FEntry(filename, (short) 0, (short) -1);
             inodeTable[freeindex] = entry;
             write_FEntry_OD(freeindex, entry);
-        }
+        
 
-        finally {
-            rwLock.writeLock().unlock();
-        }
     }
     
-    public void deletefile(String filename) throws Exception {
-        rwLock.writeLock().lock();
-        try{
+    public void deleteFile(String filename) throws Exception {
+       
             int index = find_file_index(filename);
             if(index==-1){
                 throw new Exception("file does not Exist");
@@ -107,16 +115,13 @@ public class FileSystemManager {
             }
             inodeTable[index] = null;
             write_empty_FEntry_OD(index);
-        }
-        finally {
-            rwLock.writeLock().unlock();
-        }
+        
+        
     }
 
 
-    public void writefile(String filename, byte[] contents) throws Exception {
-        rwLock.writeLock().lock();
-        try{
+    public void writeFile(String filename, byte[] contents) throws Exception {
+       
             int index = find_file_index(filename);
             if (index==-1){
                 throw new Exception("file does not exist");
@@ -183,18 +188,13 @@ public class FileSystemManager {
             entry.setFilesize((short) filesize);
             inodeTable[index] = new FEntry(entry.getFilename(), (short) filesize, firstblock);
             write_FEntry_OD(index, inodeTable[index]);
-        }
-
-        finally{
-            rwLock.writeLock().unlock();
-        }
+        
     }
 
 
 
-    public byte[] readfile(String filename) throws Exception {
-        rwLock.readLock().lock();
-        try{
+    public byte[] readFile(String filename) throws Exception {
+        
             int index = find_file_index(filename);
             if (index == -1){
                 throw new Exception("file does not exist");
@@ -215,16 +215,11 @@ public class FileSystemManager {
             }
 
             return result;
-        }
-
-        finally{
-            rwLock.readLock().unlock();
-        }
+       
     }
 
-    public String[] listfiles(){
-        rwLock.readLock().lock();
-        try{
+    public String[] listFiles() throws IOException {
+       
             List<String> filenames = new ArrayList<>();
             for (FEntry entry : inodeTable) {
                 if (entry != null) {
@@ -232,11 +227,7 @@ public class FileSystemManager {
                 }
             }
             return filenames.toArray(new String[0]);
-        }
-
-        finally{
-            rwLock.readLock().unlock();
-        }
+       
     }
 
 
@@ -352,7 +343,7 @@ public class FileSystemManager {
     private void read_data_block (int index_block, byte[] dst, int offset, int length) throws IOException {
         long pos = (long) index_block * BLOCK_SIZE;
         disk.seek(pos);
-        disk.write(new byte[BLOCK_SIZE]);
+        disk.readFully(dst, offset, length);
     }
 
 
