@@ -365,7 +365,7 @@ public class FileSystemManager {
     private void read_data_block (int index_block, byte[] dst, int offset, int length) throws IOException {
         long pos = (long) index_block * BLOCK_SIZE;
         disk.seek(pos);
-        disk.write(new byte[BLOCK_SIZE]);
+        disk.readFully(dst, offset, length);
     }
 
 
