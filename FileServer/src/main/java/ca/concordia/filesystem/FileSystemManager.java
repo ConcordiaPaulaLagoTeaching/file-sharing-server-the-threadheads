@@ -37,6 +37,8 @@ public class FileSystemManager {
     private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true);
 
     public FileSystemManager(String filename, int totalSize) throws IOException {
+        
+
         // Initialize the file system manager with a file
         this.entryoffset = 0;
         this.nodeoffset = MAXFILES * FEntry_size;
@@ -59,10 +61,21 @@ public class FileSystemManager {
             load_metadata_FD();
         }
     }
-
-
-    public void createfile(String filename) throws Exception {
+    public void lockRead() {
+        rwLock.readLock().lock();
+    }
+    public void unlockRead() {
+        rwLock.readLock().unlock();
+    }
+    public void lockWrite() {
         rwLock.writeLock().lock();
+    }
+    public void unlockWrite() {
+        rwLock.writeLock().unlock();
+    }
+
+    public void createFile(String filename) throws Exception {
+        //
         try {
             check_filename(filename);
             if (find_file_index(filename) != -1) {
@@ -80,12 +93,12 @@ public class FileSystemManager {
         }
 
         finally {
-            rwLock.writeLock().unlock();
+            //rwLock.writeLock().unlock();
         }
     }
     
-    public void deletefile(String filename) throws Exception {
-        rwLock.writeLock().lock();
+    public void deleteFile(String filename) throws Exception {
+        //rwLock.writeLock().lock();
         try{
             int index = find_file_index(filename);
             if(index==-1){
@@ -109,13 +122,13 @@ public class FileSystemManager {
             write_empty_FEntry_OD(index);
         }
         finally {
-            rwLock.writeLock().unlock();
+            //rwLock.writeLock().unlock();
         }
     }
 
 
-    public void writefile(String filename, byte[] contents) throws Exception {
-        rwLock.writeLock().lock();
+    public void writeFile(String filename, byte[] contents) throws Exception {
+        //rwLock.writeLock().lock();
         try{
             int index = find_file_index(filename);
             if (index==-1){
@@ -186,14 +199,14 @@ public class FileSystemManager {
         }
 
         finally{
-            rwLock.writeLock().unlock();
+            //rwLock.writeLock().unlock();
         }
     }
 
 
 
-    public byte[] readfile(String filename) throws Exception {
-        rwLock.readLock().lock();
+    public byte[] readFile(String filename) throws Exception {
+        //rwLock.readLock().lock();
         try{
             int index = find_file_index(filename);
             if (index == -1){
@@ -218,12 +231,12 @@ public class FileSystemManager {
         }
 
         finally{
-            rwLock.readLock().unlock();
+            //rwLock.readLock().unlock();
         }
     }
 
-    public String[] listfiles(){
-        rwLock.readLock().lock();
+    public String[] listFiles(){
+        //rwLock.readLock().lock();
         try{
             List<String> filenames = new ArrayList<>();
             for (FEntry entry : inodeTable) {
@@ -235,7 +248,7 @@ public class FileSystemManager {
         }
 
         finally{
-            rwLock.readLock().unlock();
+            //rwLock.readLock().unlock();
         }
     }
 
