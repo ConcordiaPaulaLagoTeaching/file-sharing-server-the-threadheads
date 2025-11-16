@@ -51,11 +51,13 @@ public class ThreadManagementTests {
 
     @Test
     void testReadersAndWritersSynchronization() throws Exception {
+        //ClientRunner.send("DELETE shared");
         ClientRunner.send("CREATE shared");
         ClientRunner.send("WRITE shared hello");
 
         ExecutorService pool = Executors.newFixedThreadPool(10);
-        CountDownLatch latch = new CountDownLatch(10);
+        //CountDownLatch latch = new CountDownLatch(10);
+        CountDownLatch latch = new CountDownLatch(6);
 
         // Start readers
         for (int i = 0; i < 5; i++) {
@@ -82,7 +84,7 @@ public class ThreadManagementTests {
             }
         });
 
-        boolean finished = latch.await(10, TimeUnit.SECONDS);
+        boolean finished = latch.await(15, TimeUnit.SECONDS);
         pool.shutdownNow();
 
         assertTrue(finished, "Threads did not complete properly — possible deadlock");

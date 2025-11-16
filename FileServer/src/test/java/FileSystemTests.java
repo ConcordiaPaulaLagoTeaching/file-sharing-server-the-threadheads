@@ -13,6 +13,7 @@ public class FileSystemTests {
 
     @Test
     void testCreateFile() throws Exception {
+        fs.deleteFile("a.txt");// TO BE ABLE TO REUSE TEST WITHOUT HAVING TO CHANGE FILENAME
         fs.createFile("a.txt");
         boolean fileFound = false;
         for (String fileName : fs.listFiles()) {
@@ -22,6 +23,7 @@ public class FileSystemTests {
             }
         }
         assertTrue(fileFound);
+        
     }
 
     @Test
@@ -33,17 +35,21 @@ public class FileSystemTests {
 
     @Test
     void testWriteAndReadFile() throws Exception {
+        fs.deleteFile("a.txt");// TO BE ABLE TO REUSE TEST WITHOUT HAVING TO CHANGE FILENAME
         fs.createFile("a.txt");
         fs.writeFile("a.txt", "hello".getBytes());
         assertEquals("hello", new String(fs.readFile("a.txt")));
+        
     }
 
     @Test
     void testWriteAndReadLongFile() throws Exception {
+        fs.deleteFile("c.txt");// TO BE ABLE TO REUSE TEST WITHOUT HAVING TO CHANGE FILENAME
         fs.createFile("c.txt");
         String longContent = "This is a long content that exceeds 128 bytes. ".repeat(5);
         fs.writeFile("c.txt", longContent.getBytes());
         assertEquals(longContent, new String(fs.readFile("c.txt")));
+       
     }
 
     @Test

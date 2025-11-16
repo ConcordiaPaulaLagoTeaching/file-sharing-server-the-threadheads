@@ -75,8 +75,7 @@ public class FileSystemManager {
     }
 
     public void createFile(String filename) throws Exception {
-        //
-        try {
+        
             check_filename(filename);
             if (find_file_index(filename) != -1) {
                 throw new Exception("File Already exists");
@@ -90,16 +89,12 @@ public class FileSystemManager {
             FEntry entry = new FEntry(filename, (short) 0, (short) -1);
             inodeTable[freeindex] = entry;
             write_FEntry_OD(freeindex, entry);
-        }
+        
 
-        finally {
-            //rwLock.writeLock().unlock();
-        }
     }
     
     public void deleteFile(String filename) throws Exception {
-        //rwLock.writeLock().lock();
-        try{
+       
             int index = find_file_index(filename);
             if(index==-1){
                 throw new Exception("file does not Exist");
@@ -120,16 +115,13 @@ public class FileSystemManager {
             }
             inodeTable[index] = null;
             write_empty_FEntry_OD(index);
-        }
-        finally {
-            //rwLock.writeLock().unlock();
-        }
+        
+        
     }
 
 
     public void writeFile(String filename, byte[] contents) throws Exception {
-        //rwLock.writeLock().lock();
-        try{
+       
             int index = find_file_index(filename);
             if (index==-1){
                 throw new Exception("file does not exist");
@@ -196,18 +188,13 @@ public class FileSystemManager {
             entry.setFilesize((short) filesize);
             inodeTable[index] = new FEntry(entry.getFilename(), (short) filesize, firstblock);
             write_FEntry_OD(index, inodeTable[index]);
-        }
-
-        finally{
-            //rwLock.writeLock().unlock();
-        }
+        
     }
 
 
 
     public byte[] readFile(String filename) throws Exception {
-        //rwLock.readLock().lock();
-        try{
+        
             int index = find_file_index(filename);
             if (index == -1){
                 throw new Exception("file does not exist");
@@ -228,16 +215,11 @@ public class FileSystemManager {
             }
 
             return result;
-        }
-
-        finally{
-            //rwLock.readLock().unlock();
-        }
+       
     }
 
-    public String[] listFiles(){
-        //rwLock.readLock().lock();
-        try{
+    public String[] listFiles() throws IOException {
+       
             List<String> filenames = new ArrayList<>();
             for (FEntry entry : inodeTable) {
                 if (entry != null) {
@@ -245,11 +227,7 @@ public class FileSystemManager {
                 }
             }
             return filenames.toArray(new String[0]);
-        }
-
-        finally{
-            //rwLock.readLock().unlock();
-        }
+       
     }
 
 
